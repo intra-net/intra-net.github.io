@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jitsi Konferenz</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <!-- Header mit Uhrzeit -->
+  <header class="bg-white shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <div id="datetime" class="text-gray-600">
+        <span id="date"></span> | 
+        <span id="time"></span>
+      </div>
+      <button 
+        onclick="window.location.href = '/main.html'"
+        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+      >
+        <i class="fa-solid fa-home mr-2"></i>Zur Hauptseite
+      </button>
+    </div>
+  </header>
+
+  <!-- Meeting-Modal -->
+  <div id="meeting-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50">
+    <div class="modal-content bg-white p-6 rounded-lg max-w-md mx-auto mt-20">
+      <h3 class="text-xl font-bold mb-4">
+        <i class="fa-solid fa-video mr-2"></i>Meeting erstellen
+      </h3>
+      <input 
+        type="text" 
+        id="meeting-name"
+        placeholder="Meeting-Name eingeben"
+        class="w-full mb-4 p-2 border rounded"
+      >
+      <div class="flex justify-end space-x-3">
+        <button 
+          onclick="closeMeetingModal()"
+          class="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
+        >
+          Abbrechen
+        </button>
+        <button 
+          onclick="createMeeting()"
+          class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Erstellen
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth-Section -->
+  <div id="auth-section" class="w-full max-w-sm mx-auto mt-10 bg-white rounded-lg shadow-lg p-8">
+    <h2 class="text-2xl font-bold mb-6 text-center text-blue-600">
+      <i class="fa-solid fa-video mr-2"></i>Jitsi Login
+    </h2>
+    <form id="login-form" class="space-y-4">
+      <div>
+        <label class="block text-gray-700 mb-1">
+          <i class="fa-solid fa-envelope mr-1"></i>Email
+        </label>
+        <input 
+          type="email" 
+          id="email" 
+          required 
+          class="w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:border-blue-400"
+        >
+      </div>
+      <div>
+        <label class="block text-gray-700 mb-1">
+          <i class="fa-solid fa-lock mr-1"></i>Passwort
+        </label>
+        <input 
+          type="password" 
+          id="password" 
+          required 
+          class="w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:border-blue-400"
+        >
+      </div>
+      <button 
+        type="submit" 
+        class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition-colors"
+      >
+        <i class="fa-solid fa-right-to-bracket mr-2"></i>Anmelden
+      </button>
+    </form>
+    <div id="error-message" class="text-red-500 mt-2 text-center"></div>
+  </div>
+
+  <!-- Main-Section -->
+  <div id="main-section" class="hidden w-full max-w-4xl mx-auto mt-10">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-bold text-blue-600">
+        <i class="fa-solid fa-video"></i> Jitsi Videokonferenz
+      </h2>
+      <div class="space-x-3">
+        <button 
+          onclick="openMeetingModal()"
+          class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+        >
+          <i class="fa-solid fa-plus mr-2"></i>Neues Meeting
+        </button>
+        <button 
+          id="logout-btn" 
+          class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
+        >
+          <i class="fa-solid fa-right-from-bracket mr-2"></i>Abmelden
+        </button>
+      </div>
+    </div>
+    <div class="w-full aspect-video rounded-lg overflow-hidden border shadow-lg">
+      <iframe
+        id="jitsi-iframe"
+        allow="camera; microphone; fullscreen; display-capture"
+        src=""
+        style="width:100%; height:100%; border:0;"
+        allowfullscreen
+      ></iframe>
+    </div>
+  </div>
+
+  <script>
+    // Firebase-Konfiguration
+    const firebaseConfig = {
+       // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  apiKey: "AIzaSyDbYDXGGmoVVLMos7Am04jn5a2Cu3xu9Uo",
+  authDomain: "inventory-controll-lcw.firebaseapp.com",
+  projectId: "inventory-controll-lcw",
+  storageBucket: "inventory-controll-lcw.firebasestorage.app",
+  messagingSenderId: "988874881751",
+  appId: "1:988874881751:web:7627f375422ce00442ce92",
+  measurementId: "G-DM3CK3GD55"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // UI-Elemente
+    const authSection = document.getElementById('auth-section');
+    const mainSection = document.getElementById('main-section');
+    const loginForm = document.getElementById('login-form');
+    const errorMessage = document.getElementById('error-message');
+    const logoutBtn = document.getElementById('logout-btn');
+    const jitsiIframe = document.getElementById('jitsi-iframe');
+
+    // Meeting-Variablen
+    let currentMeetingName = 'default-room';
+
+    // Uhrzeit und Datum
+    function updateDateTime() {
+      const options = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      };
+      
+      const now = new Date();
+      document.getElementById('date').textContent = now.toLocaleDateString('de-DE', options);
+      document.getElementById('time').textContent = now.toLocaleTimeString('de-DE');
+    }
+    
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+
+    // Meeting-Modal Funktionen
+    function openMeetingModal() {
+      document.getElementById('meeting-modal').classList.remove('hidden');
+    }
+
+    function closeMeetingModal() {
+      document.getElementById('meeting-modal').classList.add('hidden');
+    }
+
+    function createMeeting() {
+      const meetingName = document.getElementById('meeting-name').value;
+      if (meetingName) {
+        currentMeetingName = meetingName.replace(/\s+/g, '-').toLowerCase();
+        closeMeetingModal();
+        startJitsiMeeting(currentMeetingName);
+      }
+    }
+
+    // Jitsi-Startfunktion
+    function startJitsiMeeting(roomName) {
+      const displayName = auth.currentUser?.email.split('@')[0] || 'Guest';
+      jitsiIframe.src = `https://meet.jit.si/${roomName}#userInfo.displayName="${encodeURIComponent(displayName)}"`;
+    }
+
+    // Auth-Status beobachten
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        authSection.classList.add('hidden');
+        mainSection.classList.remove('hidden');
+        startJitsiMeeting(currentMeetingName);
+      } else {
+        mainSection.classList.add('hidden');
+        authSection.classList.remove('hidden');
+        loginForm.reset();
+        errorMessage.textContent = '';
+      }
+    });
+
+    // Login-Formular
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      errorMessage.textContent = '';
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+      } catch (err) {
+        if (err.code === 'auth/user-not-found') {
+          try {
+            await auth.createUserWithEmailAndPassword(email, password);
+          } catch (regErr) {
+            errorMessage.textContent = regErr.message;
+          }
+        } else {
+          errorMessage.textContent = err.message;
+        }
+      }
+    });
+
+    // Logout
+    logoutBtn.addEventListener('click', () => {
+      auth.signOut();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nutzer Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen p-4">
+    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        
+        <!-- WLAN Status -->
+        <div class="bg-white rounded-lg p-6 shadow-lg transition-all duration-300 hover:scale-105">
+            <h2 class="text-xl font-bold mb-4">Vodafone WLAN</h2>
+            <div id="wifiStatus" class="text-center">
+                <i class="fas fa-wifi fa-3x text-blue-500 animate-pulse"></i>
+                <p class="mt-2 font-semibold">Verbindung wird geprüft...</p>
+            </div>
+        </div>
+
+        <!-- Speedtest -->
+        <div class="bg-white rounded-lg p-6 shadow-lg transition-all duration-300 hover:scale-105">
+            <h2 class="text-xl font-bold mb-4">Geschwindigkeit</h2>
+            <div id="speedTest" class="text-center">
+                <i class="fas fa-tachometer-alt fa-3x text-green-500 animate-spin"></i>
+                <div class="mt-2 grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-sm">Download</p>
+                        <p><span class="download-speed">0</span> Mbps</p>
+                    </div>
+                    <div>
+                        <p class="text-sm">Upload</p>
+                        <p><span class="upload-speed">0</span> Mbps</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Datenverbrauch -->
+        <div class="bg-white rounded-lg p-6 shadow-lg transition-all duration-300 hover:scale-105">
+            <h2 class="text-xl font-bold mb-4">Datenverbrauch</h2>
+            <div class="text-center">
+                <i class="fas fa-chart-bar fa-3x text-purple-500"></i>
+                <div class="mt-4 space-y-2">
+                    <div class="bg-gray-200 rounded-full h-4">
+                        <div id="dataUsageBar" class="bg-purple-500 h-4 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <p class="text-sm"><span id="dataUsage">0</span> MB von 1000 MB</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Website Status -->
+        <div class="col-span-full bg-white rounded-lg p-6 shadow-lg">
+            <h2 class="text-xl font-bold mb-4">Service Status</h2>
+            <div id="websiteStatus" class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <!-- Dynamisch gefüllt -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Konfiguration
+        const services = [
+            { name: 'Google', url: 'https://www.google.com', icon: 'search' },
+            { name: 'YouTube', url: 'https://www.youtube.com', icon: 'video' },
+            { name: 'GitHub', url: 'https://www.github.com', icon: 'code-branch' },
+            { name: 'Cloudflare', url: 'https://www.cloudflare.com', icon: 'shield-alt' },
+            { name: 'EMS', url: 'http://ews.ct.ws/', icon: 'exclamation-circle' },
+            { name: 'Dashboard (Intranet, Placeholder)', url: 'https://www.example.com', icon: 'hourglass' },
+            { name: 'Puter.com', url: 'https://puter.com', icon: 'desktop' },
+            { name: 'Placeholder', url: 'https://www.example.com', icon: 'hourglass' },
+            { name: 'AWS Status', url: 'https://status.aws.amazon.com', icon: 'cloud' }     
+        ];
+
+        // Echtzeit Speedtest mit WebSocket
+        function runRealSpeedTest() {
+            const ws = new WebSocket('wss://speedtest-server.example.com'); // Ersetzen mit eigenem Server
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if(data.type === 'download') {
+                    document.querySelector('.download-speed').textContent = data.speed;
+                } else if(data.type === 'upload') {
+                    document.querySelector('.upload-speed').textContent = data.speed;
+                    document.querySelector('#speedTest i').classList.remove('animate-spin');
+                }
+            };
+            
+            // Fallback
+            setTimeout(() => {
+                if(document.querySelector('.download-speed').textContent === '0') {
+                    simulateSpeedTest();
+                }
+            }, 5000);
+        }
+
+        // Simulierter Speedtest
+        async function simulateSpeedTest() {
+            const testSizes = [1, 5, 10]; // MB
+            const start = performance.now();
+            
+            try {
+                // Download Test
+                const downloadResponse = await fetch(`https://httpbin.org/bytes/${testSizes[1]*1024*1024}`);
+                const downloadTime = (performance.now() - start) / 1000;
+                const downloadSpeed = (testSizes[1] * 8 / downloadTime).toFixed(2);
+                
+                document.querySelector('.download-speed').textContent = downloadSpeed;
+                
+                // Upload Test
+                const uploadData = new Blob([new Uint8Array(testSizes[0]*1024*1024)]);
+                const uploadStart = performance.now();
+                await fetch('https://httpbin.org/post', {
+                    method: 'POST',
+                    body: uploadData
+                });
+                const uploadTime = (performance.now() - uploadStart) / 1000;
+                const uploadSpeed = (testSizes[0] * 8 / uploadTime).toFixed(2);
+                
+                document.querySelector('.upload-speed').textContent = uploadSpeed;
+                document.querySelector('#speedTest i').classList.remove('animate-spin');
+            } catch {
+                document.querySelector('#speedTest i').classList.add('text-red-500');
+            }
+        }
+
+        // Netzwerkstatus mit WebRTC
+        function checkNetworkStatus() {
+            const connection = navigator.connection || navigator.mozConnection;
+            
+            if(connection) {
+                connection.addEventListener('change', () => {
+                    updateNetworkInfo(connection);
+                });
+                updateNetworkInfo(connection);
+            } else {
+                // Fallback
+                checkInternetConnection();
+            }
+        }
+
+        function updateNetworkInfo(connection) {
+            const wifiStatus = document.querySelector('#wifiStatus');
+            wifiStatus.querySelector('i').classList.remove('text-blue-500', 'text-red-500', 'animate-pulse');
+            
+            if(connection.downlink > 5) {
+                wifiStatus.querySelector('i').classList.add('text-green-500');
+                wifiStatus.querySelector('p').textContent = `Online (${connection.effectiveType})`;
+            } else {
+                wifiStatus.querySelector('i').classList.add('text-orange-500');
+                wifiStatus.querySelector('p').textContent = `Eingeschränkt (${connection.effectiveType})`;
+            }
+        }
+
+        async function checkInternetConnection() {
+            try {
+                await fetch('https://connectivitycheck.gstatic.com/generate_204', {mode: 'no-cors'});
+                document.querySelector('#wifiStatus i').classList.replace('text-blue-500', 'text-green-500');
+                document.querySelector('#wifiStatus p').textContent = 'Online';
+            } catch {
+                document.querySelector('#wifiStatus i').classList.replace('text-blue-500', 'text-red-500');
+                document.querySelector('#wifiStatus p').textContent = 'Offline';
+            }
+        }
+
+        // Website Status mit Cache Busting
+        async function checkServices() {
+            const container = document.getElementById('websiteStatus');
+            container.innerHTML = '';
+
+            for(const service of services) {
+                const statusElement = document.createElement('div');
+                statusElement.className = 'p-2 rounded text-center border';
+                
+                try {
+                    const start = performance.now();
+                    const response = await fetch(`${service.url}?t=${Date.now()}`, {
+                        method: 'HEAD',
+                        mode: 'no-cors',
+                        cache: 'no-store'
+                    });
+                    const latency = performance.now() - start;
+                    
+                    statusElement.innerHTML = `
+                        <i class="fas fa-${service.icon} fa-2x mb-2"></i>
+                        <i class="fas fa-check-circle text-green-500 absolute top-1 right-1"></i>
+                        <p class="text-sm font-medium">${service.name}</p>
+                        <p class="text-xs text-gray-500">${latency.toFixed(0)}ms</p>
+                    `;
+                    statusElement.classList.add('bg-green-50', 'relative');
+                } catch {
+                    statusElement.innerHTML = `
+                        <i class="fas fa-${service.icon} fa-2x mb-2"></i>
+                        <i class="fas fa-times-circle text-red-500 absolute top-1 right-1"></i>
+                        <p class="text-sm font-medium">${service.name}</p>
+                        <p class="text-xs text-gray-500">Offline</p>
+                    `;
+                    statusElement.classList.add('bg-red-50', 'relative');
+                }
+                
+                container.appendChild(statusElement);
+            }
+        }
+
+        // Datenverbrauch mit Storage API
+        function updateDataUsage() {
+            const usage = localStorage.getItem('dataUsage') || 0;
+            const newUsage = parseFloat(usage) + (Math.random() * 10);
+            localStorage.setItem('dataUsage', newUsage.toFixed(2));
+            
+            const percentage = Math.min(100, (newUsage / 1000 * 100));
+            document.getElementById('dataUsage').textContent = newUsage.toFixed(2);
+            document.getElementById('dataUsageBar').style.width = `${percentage}%`;
+            
+            if(percentage > 90) {
+                document.getElementById('dataUsageBar').classList.replace('bg-purple-500', 'bg-red-500');
+            }
+        }
+
+        // Initialisierung
+        window.addEventListener('load', () => {
+            checkNetworkStatus();
+            runRealSpeedTest();
+            checkServices();
+            updateDataUsage();
+            
+            setInterval(() => {
+                checkServices();
+                updateDataUsage();
+            }, 30000);
+            
+            setInterval(() => {
+                runRealSpeedTest();
+            }, 60000);
+        });
+    </script>
+</body>
+</html>

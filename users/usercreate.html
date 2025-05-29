@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Mehrere Logindaten erstellen</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 2rem;
+            text-align: center;
+        }
+        input {
+            padding: 0.6rem;
+            font-size: 1rem;
+            width: 100px;
+            margin-right: 1rem;
+        }
+        button {
+            padding: 0.6rem 1.5rem;
+            font-size: 1rem;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .status {
+            margin-top: 1rem;
+            color: green;
+        }
+        .error {
+            color: red;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Logindaten für mehrere Nutzer erstellen</h1>
+    <input type="number" id="userCount" placeholder="Anzahl" min="1" max="100" />
+    <button onclick="generateLogins()">Erstellen</button>
+
+    <div id="status" class="status"></div>
+    <div id="error" class="error"></div>
+
+    <script>
+      // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbYDXGGmoVVLMos7Am04jn5a2Cu3xu9Uo",
+            authDomain: "inventory-controll-lcw.firebaseapp.com",
+            projectId: "inventory-controll-lcw",
+            storageBucket: "inventory-controll-lcw.firebasestorage.app",
+            messagingSenderId: "988874881751",
+            appId: "1:988874881751:web:7627f375422ce00442ce92",
+            measurementId: "G-DM3CK3GD55"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        async function generateUniqueLogin() {
+            let isUnique = false;
+            let kennung1, kennung2;
+
+            while (!isUnique) {
+                kennung1 = 'user' + Math.floor(Math.random() * 1000000);
+                kennung2 = Math.random().toString(36).slice(2, 10);
+
+                const snapshot = await database.ref('credentials')
+                    .orderByChild('kennung1').equalTo(kennung1).once('value');
+
+                if (!snapshot.exists()) {
+                    isUnique = true;
+                }
+            }
+
+            return { kennung1, kennung2 };
+        }
+
+        async function generateLogins() {
+            document.getElementById('status').textContent = '';
+            document.getElementById('error').textContent = '';
+
+            const count = parseInt(document.getElementById('userCount').value);
+
+            if (!count || count <= 0) {
+                document.getElementById('error').textContent = 'Bitte eine gültige Anzahl eingeben.';
+                return;
+            }
+
+            try {
+                const { jsPDF } = window.jspdf;
+
+                for (let i = 0; i < count; i++) {
+                    const { kennung1, kennung2 } = await generateUniqueLogin();
+
+                    // Speichern in Firebase
+                    await database.ref('credentials').push({ kennung1, kennung2 });
+
+                    // PDF erstellen und herunterladen
+                    const doc = new jsPDF();
+                    doc.text("Ihre Logindaten", 20, 20);
+                    doc.text(`Benutzername: ${kennung1}`, 20, 40);
+                    doc.text(`Passwort: ${kennung2}`, 20, 50);
+                    doc.save(`Logindaten_${kennung1}.pdf`);
+                }
+
+                document.getElementById('status').textContent = `${count} PDFs erfolgreich erstellt und heruntergeladen.`;
+            } catch (error) {
+                console.error(error);
+              alert(error)
+                document.getElementById('error').textContent = 'Fehler beim Erstellen der Logindaten.';
+            }
+        }
+    </script>
+</body>
+</html>

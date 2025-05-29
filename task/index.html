@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <script src="https://www.gstatic.com/firebasejs/8.2.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.2.2/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.2.2/firebase-database.js"></script>
+    <script src="https://kit.fontawesome.com/d733855d1a.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="task/style.css">
+    
+</head>
+<body>
+    <header class="head">
+        <h1 class="main-heading">Task Manager 📄</h1>
+    </header>
+
+    <div class="header">
+        <div class="text">
+            <h1 class = "heading">Manage your tasks with Task Manager</h1>
+            <a href="#createTask" class = "button btn-new" id = "btn-new">New task</a>
+            <a href="#tasks-header" class = "button btn-view" id = "btn-view">View task</a>
+        </div>
+        <div class="image">
+            <img src="/todolist.svg" alt="" srcset="">
+        </div>
+    </div>
+
+    <div class="left-right-div-container">
+        <div class="left-div">
+            <form class="form" onsubmit = "storeTask(event)" id = "createTask">
+                <div class = "task-div" id="taskdiv">
+                    <label for="Task" class="label" id="tasklabel">Task</label>
+                    <input type="text" name="task" id="task" class="input-field" placeholder = "Enter task" required>
+                </div>
+                <div class = "desc-div" id = "descdiv">
+                    <label for="Desc" class="label" id="desclabel">Description</label>
+                    <input type="text" name="desc" id="desc" class="input-field" placeholder = "Description" required>
+                </div>
+                <div id = "form-btns">
+                    <button type="submit" class="button add" id = "addTask" >󠀫󠀫<i class="fas fa-plus"></i> ADD TASK</button>
+                </div>    
+            </form>
+        </div>
+    
+        <div class="right-div" id = "right-div">
+            <div class="show-delete" id="tasks-header">
+                <h1 ><i class="fas fa-tasks"></i> My TASKS</h1>
+                <button class="button showAll" id="showALL" onclick = "showAll()">SHOW ALL</button>
+                <button class="button deleteAll" id="deleteALL" onclick = "deleteAll()">DELETE ALL</button>
+            </div>
+        </div>
+    </div>
+    
+    
+
+    <footer class = "footer">
+        <div class = "footer-header">social media presence</div>
+        <ul class="social-links list">
+            <li class = "list-item-inline"><a href="https://github.com/GaganpreetKaurKalsi" class = "link-footer"><i class="fab fa-github"></i></a></li>
+            <li class = "list-item-inline"><a href="https://www.linkedin.com/in/gaganpreet-kaur-kalsi-2a6650191/" class = "link-footer"><i class="fab fa-linkedin-in"></i></a></li>
+            <li class = "list-item-inline"><a href="https://www.instagram.com/gagan_singhkalsi11/" class = "link-footer"><i class="fab fa-instagram"></i></a></li>
+        </ul>
+    </footer>
+
+
+    <script>
+        document.getElementById("task").addEventListener("focusin",function(){
+            document.getElementById("tasklabel").style.color = " rgb(61, 198, 243)";
+        });
+        document.getElementById("task").addEventListener("focusout",function(){
+            document.getElementById("tasklabel").style.color = " #aaaaaa";
+        });
+        document.getElementById("desc").addEventListener("focusin", function(){
+            document.getElementById("desclabel").style.color = " rgb(61, 198, 243)";
+        });
+        document.getElementById("desc").addEventListener("focusout", function(){
+            document.getElementById("desclabel").style.color = " #aaaaaa";
+        });
+    </script>
+    <script src="/index.js"></script>
+</body>
+</html>
