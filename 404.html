@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Application unavailable</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js" crossorigin="anonymous"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
+  <style>
+    @keyframes pulseLine {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+    .line {
+      height: 2px;
+      background-color: #9ca3af;
+      animation: pulseLine 1.5s infinite;
+    }
+    .cross-icon {
+      font-size: 1.25rem;
+      color: #ef4444;
+      animation: pulseLine 1.5s infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    .blinker {
+      width: 10px;
+      height: 10px;
+      background-color: #34d399;
+      border-radius: 9999px;
+      animation: blink 1s infinite;
+    }
+    @keyframes glitch {
+      0%, 100% { opacity: 1; transform: translateX(0); }
+      20% { opacity: 0.5; transform: translateX(-1px); }
+      40% { opacity: 1; transform: translateX(1px); }
+      60% { opacity: 0.7; transform: translateX(-2px); }
+      80% { opacity: 1; transform: translateX(1px); }
+    }
+    .glitch {
+      animation: glitch 2s infinite;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800 flex flex-col items-center justify-center min-h-screen px-4">
+
+  <!-- Hauptgrafik -->
+  <div class="flex flex-col items-center space-y-10">
+    <div class="flex items-center space-x-4">
+
+      <!-- Satellit -->
+      <div class="flex flex-col items-center space-y-2">
+        <i class="fas fa-satellite-dish text-6xl text-indigo-500"></i>
+        <span class="text-sm"></span>
+      </div>
+
+      <!-- Linie mit X -->
+      <div class="flex items-center w-32 justify-center relative">
+        <div class="line absolute left-0 top-1/2 transform -translate-y-1/2 w-full"></div>
+        <i class="fas fa-xmark cross-icon z-10 bg-gray-100 px-1"></i>
+      </div>
+
+      <!-- Sendemast -->
+      <div class="flex flex-col items-center space-y-2 relative">
+        <i class="fas fa-broadcast-tower text-6xl text-yellow-500"></i>
+        <span class="text-sm"></span>
+        <div class="absolute -top-2 right-0 blinker"></div>
+      </div>
+
+      <!-- Linie mit X -->
+      <div class="flex items-center w-32 justify-center relative">
+        <div class="line absolute left-0 top-1/2 transform -translate-y-1/2 w-full"></div>
+        <i class="fas fa-xmark cross-icon z-10 bg-gray-100 px-1"></i>
+      </div>
+
+      <!-- Computer -->
+      <div class="flex flex-col items-center space-y-2">
+        <i class="fas fa-desktop text-6xl text-blue-500"></i>
+        <span class="text-sm"></span>
+      </div>
+
+    </div>
+
+    <!-- Text mit Glitch-Effekt -->
+    
+      <h1 id="headline" class="text-2xl font-bold mb-2">Anwendung nicht verfügbar</h1>
+      <p id="subline" class="text-gray-600">
+        Unsere Systeme können derzeit keine Verbindung herstellen.<br>Bitte versuche es später erneut.
+      </p>
+    <!-- Dynamischer Nachrichtentext -->
+    <div style="display: none" id="message" class="text-center text-xl font-medium text-gray-700 px-4 text-balance max-w-xl">
+      <!-- Text wird per JS eingefügt -->
+    </div>
+
+    <!-- Button -->
+    <a href="main.html" class="inline-flex items-center space-x-2 px-5 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition">
+      <i class="fas fa-arrow-left"></i>
+      <span>Back to main</span>
+    </a>
+  </div>
+
+  <!-- JavaScript für rotierende Nachrichten + Übersetzungen -->
+  <script>
+    const translations = [
+  {
+    "message": "This application is currently unavailable.",
+    "headline": "Application unavailable",
+    "subline": "Our systems are currently unable to connect.<br>Please try again later."
+  },
+  {
+    "message": "Diese Anwendung ist zurzeit nicht verfügbar.",
+    "headline": "Anwendung nicht verfügbar",
+    "subline": "Unsere Systeme können derzeit keine Verbindung herstellen.<br>Bitte versuche es später erneut."
+  },
+  {
+    "message": "Cette application est actuellement indisponible.",
+    "headline": "Application indisponible",
+    "subline": "Nos systèmes ne peuvent actuellement pas établir de connexion.<br>Veuillez réessayer plus tard."
+  },
+  {
+    "message": "Ta aplikacja jest obecnie niedostępna.",
+    "headline": "Aplikacja niedostępna",
+    "subline": "Nasze systemy nie mogą się teraz połączyć.<br>Spróbuj ponownie później."
+  },
+  {
+    "message": "Αυτή η εφαρμογή δεν είναι διαθέσιμη αυτή τη στιγμή.",
+    "headline": "Η εφαρμογή δεν είναι διαθέσιμη",
+    "subline": "Τα συστήματά μας δεν μπορούν να συνδεθούν αυτή τη στιγμή.<br>Παρακαλώ προσπαθήστε αργότερα."
+  },
+  {
+    "message": "Ova aplikacija trenutno nije dostupna.",
+    "headline": "Aplikacija nije dostupna",
+    "subline": "Naši sistemi trenutno ne mogu da se povežu.<br>Pokušajte ponovo kasnije."
+  },
+  {
+    "message": "Ова апликација тренутно није доступна.",
+    "headline": "Апликација није доступна",
+    "subline": "Наши системи тренутно не могу да се повежу.<br>Покушајте поново касније."
+  },
+  {
+    "message": "هذا التطبيق غير متاح حالياً.",
+    "headline": "التطبيق غير متاح",
+    "subline": "أنظمتنا غير قادرة على الاتصال حالياً.<br>يرجى المحاولة مرة أخرى لاحقاً."
+  },
+  {
+    "message": "Это приложение в настоящее время недоступно.",
+    "headline": "Приложение недоступно",
+    "subline": "Наши системы сейчас не могут установить соединение.<br>Пожалуйста, попробуйте позже."
+  }
+];
+
+    let current = 0;
+    const messageDiv = document.getElementById("message");
+    const headlineDiv = document.getElementById("headline");
+    const sublineDiv = document.getElementById("subline");
+
+    function rotateMessage() {
+      const t = translations[current];
+      messageDiv.textContent = t.message;
+      headlineDiv.textContent = t.headline;
+      sublineDiv.innerHTML = t.subline;
+      current = (current + 1) % translations.length;
+    }
+
+    rotateMessage();
+    setInterval(rotateMessage, 5000);
+  </script>
+
+</body>
+</html>

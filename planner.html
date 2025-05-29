@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meeting Kalender</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f4f8;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #007bff;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.5rem;
+    }
+    main {
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+    .calendar, .invitations {
+      max-width: 700px;
+      margin: 0 auto;
+      background: white;
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    input, button, select {
+      padding: 0.5rem;
+      margin: 0.5rem 0;
+      width: 100%;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .event-item {
+      border-bottom: 1px solid #ddd;
+      padding: 0.5rem 0;
+    }
+    .tag {
+      display: inline-block;
+      background: #007bff;
+      color: white;
+      padding: 0.3rem 0.6rem;
+      border-radius: 999px;
+      margin: 0.2rem;
+    }
+    .suggestions {
+      border: 1px solid #ccc;
+      max-height: 100px;
+      overflow-y: auto;
+      background: #fff;
+      border-radius: 6px;
+      margin-top: -10px;
+    }
+    .suggestions div {
+      padding: 5px;
+      cursor: pointer;
+    }
+    .suggestions div:hover {
+      background-color: #eee;
+    }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+</head>
+<body>
+  <header><i class="fa-solid fa-calendar-days"></i> Kalender & Meeting Einladungen</header>
+  <main>
+    <div class="calendar">
+      <h2>Event erstellen</h2>
+      <input type="text" id="eventTitle" placeholder="Titel des Events">
+      <input type="datetime-local" id="eventTime">
+      <div class="invite-section">
+        <h3>Benutzer einladen</h3>
+        <input type="text" id="inviteEmail" placeholder="E-Mail-Adresse" oninput="showSuggestions(this.value)">
+        <div class="suggestions" id="suggestions"></div>
+        <button onclick="addInvitee()"><i class="fa-solid fa-user-plus"></i> Hinzufügen</button>
+        <div id="inviteeList"></div>
+      </div>
+      <button onclick="createEvent()"><i class="fa-solid fa-check"></i> Event speichern & Einladen</button>
+    </div>
+
+    <div class="invitations">
+      <h2>Meine Einladungen</h2>
+      <div id="invitationList"></div>
+    </div>
+  </main>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDbYDXGGmoVVLMos7Am04jn5a2Cu3xu9Uo",
+      authDomain: "inventory-controll-lcw.firebaseapp.com",
+      projectId: "inventory-controll-lcw",
+      storageBucket: "inventory-controll-lcw.firebasestorage.app",
+      messagingSenderId: "988874881751",
+      appId: "1:988874881751:web:7627f375422ce00442ce92",
+      measurementId: "G-DM3CK3GD55"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    let currentUserEmail = null;
+    let invitees = [];
+    let allUsers = [];
+
+    firebase.auth().onAuthStateChanged(user => {
+      if (!user) {
+        const email = prompt("E-Mail?");
+        const password = prompt("Passwort?");
+        firebase.auth().signInWithEmailAndPassword(email, password)
+          .catch(error => alert("Fehler beim Login: " + error.message));
+      } else {
+        currentUserEmail = user.email;
+        firebase.database().ref("users/" + user.uid).set({ email: user.email });
+        loadUsers();
+        loadInvitations();
+      }
+    });
+
+    function loadUsers() {
+      firebase.database().ref("users").once("value", snapshot => {
+        const users = snapshot.val();
+        allUsers = [];
+        for (let uid in users) {
+          if (users[uid].email !== currentUserEmail) {
+            allUsers.push(users[uid].email);
+          }
+        }
+      });
+    }
+
+    function showSuggestions(input) {
+      const container = document.getElementById("suggestions");
+      container.innerHTML = "";
+      if (!input) return;
+      const matches = allUsers.filter(email => email.toLowerCase().includes(input.toLowerCase()));
+      matches.forEach(email => {
+        const div = document.createElement("div");
+        div.textContent = email;
+        div.onclick = () => {
+          document.getElementById("inviteEmail").value = email;
+          container.innerHTML = "";
+        };
+        container.appendChild(div);
+      });
+    }
+
+    function addInvitee() {
+      const email = document.getElementById("inviteEmail").value;
+      if (email && !invitees.includes(email)) {
+        invitees.push(email);
+        updateInviteeList();
+        document.getElementById("inviteEmail").value = "";
+      }
+    }
+
+    function updateInviteeList() {
+      const list = document.getElementById("inviteeList");
+      list.innerHTML = invitees.map(e => `<span class='tag'>${e}</span>`).join(" ");
+    }
+
+    function createEvent() {
+      const title = document.getElementById('eventTitle').value;
+      const time = document.getElementById('eventTime').value;
+      if (!title || !time || !currentUserEmail || invitees.length === 0) return alert("Bitte alle Felder ausfüllen!");
+
+      const eventId = firebase.database().ref().child('events').push().key;
+      firebase.database().ref('events/' + eventId).set({
+        title,
+        time,
+        creator: currentUserEmail,
+        invites: invitees
+      });
+
+      invitees.forEach(email => {
+        const invitationId = firebase.database().ref().child('invitations').push().key;
+        firebase.database().ref('invitations/' + invitationId).set({
+          title,
+          time,
+          from: currentUserEmail,
+          to: email,
+          status: "offen"
+        });
+      });
+
+      alert("Event gespeichert & Einladungen gesendet!");
+      invitees = [];
+      updateInviteeList();
+    }
+
+    function loadInvitations() {
+      firebase.database().ref('invitations').on('value', snapshot => {
+        const container = document.getElementById('invitationList');
+        container.innerHTML = '';
+        const data = snapshot.val();
+        for (let id in data) {
+          const inv = data[id];
+          if (inv.to === currentUserEmail) {
+            const dateFormatted = dayjs(inv.time).format('DD.MM.YYYY HH:mm');
+            const div = document.createElement('div');
+            div.className = 'event-item';
+            div.innerHTML = `
+              <strong>${inv.title}</strong> von ${inv.from}<br>
+              <i class="fa-solid fa-clock"></i> ${dateFormatted}<br>
+              <button onclick="respondInvitation('${id}', true)"><i class='fa-solid fa-check'></i> Annehmen</button>
+              <button onclick="respondInvitation('${id}', false)"><i class='fa-solid fa-xmark'></i> Ablehnen</button>
+            `;
+            container.appendChild(div);
+          }
+        }
+      });
+    }
+
+    function respondInvitation(id, accepted) {
+      firebase.database().ref('invitations/' + id).update({
+        status: accepted ? "angenommen" : "abgelehnt"
+      });
+      alert(accepted ? "Einladung angenommen!" : "Einladung abgelehnt.");
+    }
+  </script>
+</body>
+</html>
