@@ -69,6 +69,12 @@
         <i class="fas fa-trash-alt mr-2"></i>Reset Data
     </a>
 </div>
+        <!-- Optional: Auto Check Toggle -->
+<div class="col-span-full flex items-center gap-2 mt-4">
+    <input type="checkbox" id="autoCheckToggle" class="w-4 h-4">
+    <label for="autoCheckToggle" class="text-sm font-medium">Enable automatic checks</label>
+</div>
+        
     </div>
 <!-- Toast -->
 <div id="toast" class="fixed bottom-6 right-6 px-4 py-2 rounded shadow-lg flex items-center gap-2 opacity-0 transition-opacity duration-300 pointer-events-none z-50">
@@ -338,13 +344,6 @@
 
             if (autoCheckEnabled) {
                 startIntervals();
-            }
-        });
-                document.getElementById('resetButton').addEventListener('click', (e) => {
-            e.preventDefault();
-            if (confirm('Möchtest du wirklich alle gespeicherten Einstellungen zurücksetzen?')) {
-                localStorage.clear();
-                location.reload();
             }
         });
     </script>
