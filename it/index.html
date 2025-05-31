@@ -58,8 +58,23 @@
                 <!-- Dynamisch gefüllt -->
             </div>
         </div>
+        <div class="flex gap-4">
+    <a href="support.html" class="bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded">
+        <i class="fas fa-envelope mr-2"></i>Contact Support
+    </a>
+    <a href="/" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+        <i class="fas fa-home mr-2"></i>Back to main site
+    </a>
+    <a href="#" id="resetButton" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">
+        <i class="fas fa-trash-alt mr-2"></i>Reset Data
+    </a>
+</div>
     </div>
-
+<!-- Toast -->
+<div id="toast" class="fixed bottom-6 right-6 px-4 py-2 rounded shadow-lg flex items-center gap-2 opacity-0 transition-opacity duration-300 pointer-events-none z-50">
+    <i id="toastIcon" class="fas fa-info-circle"></i>
+    <span id="toastMessage">Info</span>
+</div>
     <script>
         // Konfiguration
         const services = [
@@ -219,21 +234,118 @@
             }
         }
 
+        let autoCheckEnabled = true;
+        let checkServicesInterval;
+        let speedTestInterval;
+
+        const autoCheckToggle = document.getElementById('autoCheckToggle');
+
+        // Zustand aus localStorage wiederherstellen
+        if (localStorage.getItem('autoCheckEnabled') !== null) {
+            autoCheckEnabled = localStorage.getItem('autoCheckEnabled') === 'true';
+            autoCheckToggle.checked = autoCheckEnabled;
+        }
+
+        function startIntervals() {
+            checkServicesInterval = setInterval(() => {
+                if (autoCheckEnabled) {
+                    checkServices();
+                    updateDataUsage();
+                }
+            }, 30000);
+
+            speedTestInterval = setInterval(() => {
+                if (autoCheckEnabled) {
+                    runRealSpeedTest();
+                }
+            }, 60000);
+        }
+
+        function stopIntervals() {
+            clearInterval(checkServicesInterval);
+            clearInterval(speedTestInterval);
+        }
+
+        autoCheckToggle.addEventListener('change', (e) => {
+            autoCheckEnabled = e.target.checked;
+            localStorage.setItem('autoCheckEnabled', autoCheckEnabled);
+
+            if (!autoCheckEnabled) {
+                stopIntervals();
+                console.log("Automatische Checks deaktiviert.");
+            } else {
+                startIntervals();
+                console.log("Automatische Checks aktiviert.");
+            }
+        });
+                function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            const toastIcon = document.getElementById('toastIcon');
+
+            // Reset all styles
+            toast.className = 'fixed bottom-6 right-6 px-4 py-2 rounded shadow-lg flex items-center gap-2 opacity-0 transition-opacity duration-300 pointer-events-none z-50';
+
+            // Set icon and color based on type
+            if (type === 'success') {
+                toast.classList.add('bg-green-500', 'text-white');
+                toastIcon.className = 'fas fa-check-circle';
+            } else if (type === 'error') {
+                toast.classList.add('bg-red-500', 'text-white');
+                toastIcon.className = 'fas fa-exclamation-circle';
+            } else {
+                toast.classList.add('bg-blue-500', 'text-white');
+                toastIcon.className = 'fas fa-info-circle';
+            }
+
+            toastMessage.textContent = message;
+
+            // Show toast
+            toast.classList.remove('opacity-0');
+            toast.classList.add('opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+            }, 3000);
+        }
+                document.getElementById('resetButton').addEventListener('click', (e) => {
+            e.preventDefault();
+            try {
+                if (confirm('Do you really want to reset all saved settings?')) {
+                    localStorage.clear();
+                    localStorage.setItem('wasReset', 'true');
+                    location.reload();
+                }
+            } catch (error) {
+                showToast('An error occurred while resetting.', 'error');
+                console.error(error);
+            }
+        });
+
+        // On page load after reset
+        if (localStorage.getItem('wasReset') === 'true') {
+            localStorage.removeItem('wasReset');
+            window.addEventListener('load', () => showToast('Settings were reset.', 'success'));
+        }
+
         // Initialisierung
         window.addEventListener('load', () => {
             checkNetworkStatus();
             runRealSpeedTest();
             checkServices();
             updateDataUsage();
-            
-            setInterval(() => {
-                checkServices();
-                updateDataUsage();
-            }, 30000);
-            
-            setInterval(() => {
-                runRealSpeedTest();
-            }, 60000);
+
+            if (autoCheckEnabled) {
+                startIntervals();
+            }
+        });
+                document.getElementById('resetButton').addEventListener('click', (e) => {
+            e.preventDefault();
+            if (confirm('Möchtest du wirklich alle gespeicherten Einstellungen zurücksetzen?')) {
+                localStorage.clear();
+                location.reload();
+            }
         });
     </script>
 </body>
