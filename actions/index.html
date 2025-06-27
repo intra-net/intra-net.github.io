@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bleib mal auf dem Teppich: Weniger Überarbeitung & Mehr Schlaf</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Grundlegende Schriftart */
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Animations-Keyframes */
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes slideInLeft {
+            to {
+                opacity: 1;
+                transform: translateX(-50px);
+            }
+        }
+        @keyframes slideInRight {
+            to {
+                opacity: 1;
+                transform: translateX(50px);
+            }
+        }
+        @keyframes scaleUp {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        @keyframes blob {
+            0% { transform: translate(0px, 0px) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0px, 0px) scale(1); }
+        }
+
+        /* Fliegender Teppich Animation */
+        @keyframes flyCarpet {
+            0% { transform: translateX(-150%) translateY(0px) rotateZ(0deg) scale(0.8); opacity: 0; }
+            20% { transform: translateX(-50%) translateY(-20px) rotateZ(5deg) scale(1); opacity: 1; }
+            50% { transform: translateX(50%) translateY(0px) rotateZ(-5deg) scale(1); opacity: 1; }
+            80% { transform: translateX(150%) translateY(20px) rotateZ(5deg) scale(1); opacity: 1; }
+            100% { transform: translateX(250%) translateY(0px) rotateZ(0deg) scale(0.8); opacity: 0; }
+        }
+
+        /* Animationsklassen */
+        .animate-fadeInUp {
+            animation: fadeInUp 1s ease-out forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        .animate-slideInLeft {
+            animation: slideInLeft 1s ease-out forwards;
+            opacity: 0;
+            transform: translateX(-50px);
+        }
+        .animate-slideInRight {
+            animation: slideInRight 1s ease-out forwards;
+            opacity: 0;
+            transform: translateX(50px);
+        }
+        .animate-scaleUp {
+            animation: scaleUp 0.6s ease-out forwards;
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        .animate-blob {
+            animation: blob 7s infinite cubic-bezier(0.6, -0.28, 0.735, 0.045);
+        }
+        .animation-delay-2000 { animation-delay: 2s; }
+        .animation-delay-4000 { animation-delay: 4s; }
+        .animation-delay-500 { animation-delay: 0.5s; }
+        .animation-delay-1000 { animation-delay: 1s; }
+
+        /* Aspektverhältnis für iFrame */
+        .aspect-w-16 { --tw-aspect-w: 16; }
+        .aspect-h-9 { --tw-aspect-h: 9; }
+        .aspect-w-16 .aspect-h-9 > * {
+            position: absolute;
+            height: 100%;
+            width: 100%;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+        }
+
+        /* Go to Top Button */
+        #scrollToTopBtn {
+            display: none; /* Versteckt den Button standardmäßig */
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #4f46e5; /* Indigo */
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: opacity 0.3s, visibility 0.3s, transform 0.3s;
+            z-index: 1000;
+        }
+        #scrollToTopBtn:hover {
+            background-color: #4338ca; /* Dunkleres Indigo */
+            transform: scale(1.05);
+        }
+        #scrollToTopBtn.show {
+            display: flex; /* Zeigt den Button an */
+        }
+
+        /* Checkliste Styling */
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .checklist-item:hover {
+            background-color: #f0f0f0;
+        }
+        .checklist-item input[type="checkbox"] {
+            margin-right: 1rem;
+            width: 1.5rem;
+            height: 1.5rem;
+            accent-color: #4f46e5; /* Checkbox Farbe */
+        }
+        .checklist-item.checked {
+            background-color: #e0f2fe; /* Light blue when checked */
+        }
+        .checklist-item.checked label {
+            text-decoration: line-through;
+            color: #6b7280; /* Gray out text */
+        }
+
+        /* Fliegender Teppich Styling */
+        #flying-carpet {
+            position: absolute;
+            top: 50%;
+            left: -100%; /* Start außerhalb des Bildschirms */
+            width: 250px;
+            height: 100px;
+            background: linear-gradient(135deg, #a78bfa, #8b5cf6); /* Lila-Indigo-Verlauf */
+            border-radius: 50% / 10%; /* Ovale Form */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 100; /* Über anderen Elementen */
+            transform: translateY(-50%); /* Zentriert vertikal */
+            opacity: 0;
+            animation-fill-mode: forwards; /* Behält den letzten Keyframe bei */
+            display: none; /* Standardmäßig versteckt */
+        }
+
+        #flying-carpet::before,
+        #flying-carpet::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 20%;
+            background-color: rgba(255,255,255,0.2); /* Heller Rand für Detail */
+            left: 0;
+            border-radius: 50% / 10%;
+        }
+        #flying-carpet::before { top: -10%; }
+        #flying-carpet::after { bottom: -10%; }
+
+        #flying-carpet.active {
+            display: block; /* Zeigt den Teppich an, wenn aktiv */
+            animation: flyCarpet 4s ease-in-out forwards; /* Längere und sanftere Animation */
+        }
+
+        /* Styling für den Text auf dem Teppich */
+        #carpet-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body class="text-gray-800 bg-gradient-to-br from-indigo-50 to-purple-50 min-h-screen">
+
+    <!-- Hero Section -->
+    <section id="hero-section" class="relative h-screen flex items-center justify-center text-center p-8 overflow-hidden">
+        <!-- Hintergrund-Blobs für dynamischen Effekt -->
+        <div class="absolute top-0 left-0 w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+        <div class="absolute bottom-0 right-0 w-96 h-96 bg-indigo-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+
+        <div class="relative z-10 max-w-4xl mx-auto">
+            <h1 class="text-6xl md:text-7xl lg:text-8xl font-extrabold text-gray-900 leading-tight mb-6 animate-scaleUp">
+                Bleib mal auf dem Teppich
+            </h1>
+            <p class="text-xl md:text-2xl text-gray-600 mb-8 animate-fadeInUp animation-delay-500">
+                Finde dein Gleichgewicht: Weniger Überarbeitung, mehr Wohlbefinden und erholsamer Schlaf.
+            </p>
+            <button id="scrollButton"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 px-8 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 animate-fadeInUp animation-delay-1000">
+                Jetzt durchatmen <i class="fas fa-arrow-down ml-2"></i>
+            </button>
+        </div>
+    </section>
+
+    <!-- Video Section -->
+    <section id="video-section" class="py-20 bg-white shadow-inner-xl rounded-xl mx-auto max-w-6xl my-16 p-8 relative overflow-hidden">
+        <!-- Fliegender Teppich Animationselement -->
+        <div id="flying-carpet">
+            <span id="carpet-text">Ballermann Hits!</span>
+        </div>
+
+        <div class="absolute top-0 right-0 w-64 h-64 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-4000"></div>
+        <div class="relative z-10 text-center section-to-observe">
+            <h2 class="text-4xl font-bold text-gray-900 mb-4 animate-fadeInUp">
+                "Heute hart am Limit, morgen Aspirin"
+            </h2>
+            <p class="text-lg text-gray-600 mb-8 animate-fadeInUp animation-delay-200">
+                Ein kleiner Reminder, dass es manchmal Zeit ist, einen Gang runterzuschalten.
+            </p>
+            <div class="relative w-full max-w-3xl mx-auto rounded-2xl overflow-hidden shadow-2xl transition-all duration-500 hover:scale-[1.01]">
+                <div style="padding-bottom: 56.25%; position: relative;">
+                    <iframe
+                        id="youtube-video-iframe"
+                        class="absolute top-0 left-0 w-full h-full"
+                        src="https://www.youtube.com/embed/SqFVcQIaiG8"
+                        title="YouTube video player"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen
+                    ></iframe>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Information Sections -->
+    <section class="py-20 bg-gray-50">
+        <div class="max-w-6xl mx-auto px-8">
+            <!-- Was ist Überarbeitung? -->
+            <div class="grid md:grid-cols-2 gap-12 items-center mb-24 section-to-observe">
+                <div class="md:order-1 order-2 animate-slideInLeft">
+                    <h3 class="text-3xl font-bold text-gray-900 mb-4">
+                        <i class="fas fa-brain text-purple-600 mr-3"></i> Was ist Überarbeitung?
+                    </h3>
+                    <p class="text-lg text-gray-700 leading-relaxed mb-4">
+                        Überarbeitung ist mehr als nur Müdigkeit nach einem langen Arbeitstag. Es ist ein Zustand chronischer Erschöpfung, der entsteht, wenn die Anforderungen im Berufs- oder Privatleben über einen längeren Zeitraum die eigenen Ressourcen und die Fähigkeit zur Erholung übersteigen. Dies kann sich in emotionaler, körperlicher und geistiger Erschöpfung äußern und die Lebensqualität erheblich beeinträchtigen.
+                    </p>
+                    <p class="text-lg text-gray-700 leading-relaxed">
+                        Es ist wichtig zu verstehen, dass Überarbeitung nicht nur die Produktivität mindert, sondern auch ernsthafte gesundheitliche Folgen haben kann, von Schlafstörungen und Kopfschmerzen bis hin zu Depressionen und Herz-Kreislauf-Erkrankungen. Die Spirale aus ständigem Druck und mangelnder Erholung kann schwer zu durchbrechen sein, wenn man die Anzeichen nicht frühzeitig erkennt.
+                    </p>
+                </div>
+                <div class="md:order-2 order-1 flex justify-center animate-slideInRight">
+                    <img src="https://placehold.co/400x300/e0e7ff/6b46c1?text=Müde+Person+mit+Gedanken" alt="Müde Person mit Gedankenblasen voller Aufgaben" class="rounded-xl shadow-lg w-full max-w-sm"/>
+                </div>
+            </div>
+
+            <!-- Symptome erkennen -->
+            <div class="grid md:grid-cols-2 gap-12 items-center mb-24 section-to-observe">
+                <div class="flex justify-center animate-slideInLeft">
+                    <img src="https://placehold.co/400x300/ffe6cc/f97316?text=Uhr+und+gestresste+Person" alt="Uhr zeigt späte Stunden und eine gestresste Person" class="rounded-xl shadow-lg w-full max-w-sm"/>
+                </div>
+                <div class="animate-slideInRight">
+                    <h3 class="text-3xl font-bold text-gray-900 mb-4">
+                        <i class="fas fa-exclamation-triangle text-red-500 mr-3"></i> Symptome erkennen
+                    </h3>
+                    <p class="text-lg text-gray-700 leading-relaxed mb-4">
+                        Das Erkennen der Symptome von Überarbeitung ist der erste Schritt zur Besserung. Achten Sie auf folgende Anzeichen bei sich selbst oder bei anderen:
+                    </p>
+                    <ul class="text-lg text-gray-700 space-y-3">
+                        <li><i class="fas fa-check-circle text-green-500 mr-2"></i> Chronische Müdigkeit: Ein Gefühl der Erschöpfung, das auch nach ausreichend Schlaf nicht verschwindet.</li>
+                        <li><i class="fas fa-check-circle text-green-500 mr-2"></i> Kognitive Beeinträchtigungen: Schwierigkeiten bei der Konzentration, Gedächtnisprobleme, verminderte Kreativität und langsamerer Denkprozess.</li>
+                        <li><i class="fas fa-check-circle text-green-500 mr-2"></i> Emotionale Veränderungen: Erhöhte Reizbarkeit, Angstzustände, Niedergeschlagenheit, Gefühle von Hoffnungslosigkeit oder Zynismus.</li>
+                        <li><i class="fas fa-check-circle text-green-500 mr-2"></i> Körperliche Beschwerden: Häufige Kopfschmerzen, Verdauungsprobleme, Muskelverspannungen, erhöhter Blutdruck oder ein geschwächtes Immunsystem mit häufigen Infekten.</li>
+                        <li><i class="fas fa-check-circle text-green-500 mr-2"></i> Verlust der Motivation: Desinteresse an Hobbys, sozialen Aktivitäten und Aufgaben, die früher Freude bereiteten.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Tipps gegen Überarbeitung -->
+            <div class="grid md:grid-cols-2 gap-12 items-center mb-24 section-to-observe">
+                <div class="md:order-1 order-2 animate-slideInLeft">
+                    <h3 class="text-3xl font-bold text-gray-900 mb-4">
+                        <i class="fas fa-lightbulb text-yellow-500 mr-3"></i> Tipps gegen Überarbeitung
+                    </h3>
+                    <p class="text-lg text-gray-700 leading-relaxed mb-4">
+                        Um Überarbeitung entgegenzuwirken, ist es wichtig, bewusste Veränderungen im Alltag vorzunehmen und eine gesunde Balance zu finden:
+                    </p>
+                    <ul class="text-lg text-gray-700 space-y-3">
+                        <li><i class="fas fa-star text-indigo-500 mr-2"></i> Grenzen setzen und "Nein" sagen: Lernen Sie, Ihre eigenen Grenzen zu erkennen und zu kommunizieren. Es ist in Ordnung, zusätzliche Aufgaben abzulehnen, wenn sie Sie überfordern würden.</li>
+                        <li><i class="fas fa-star text-indigo-500 mr-2"></i> Regelmäßige Pausen einplanen: Kurze, bewusste Pausen während des Arbeitstages sind entscheidend, um Ermüdung vorzubeugen. Stehen Sie auf, dehnen Sie sich, machen Sie einen kurzen Spaziergang oder trinken Sie etwas.</li>
+                        <li><i class="fas fa-star text-indigo-500 mr-2"></i> Effektives Zeitmanagement: Priorisieren Sie Ihre Aufgaben nach Dringlichkeit und Wichtigkeit. Techniken wie die "Eisenhower-Matrix" oder die "Pomodoro-Technik" können helfen, den Fokus zu behalten und Überlastung zu vermeiden.</li>
+                        <li><i class="fas fa-star text-indigo-500 mr-2"></i> Aufgaben delegieren: Wenn möglich, geben Sie Aufgaben ab, die nicht unbedingt von Ihnen erledigt werden müssen. Vertrauen Sie anderen und bitten Sie um Unterstützung.</li>
+                        <li><i class="fas fa-star text-indigo-500 mr-2"></i> Freizeit und Hobbys pflegen: Nehmen Sie sich bewusst Zeit für Aktivitäten, die Ihnen Freude bereichen und Sie entspannen. Dies können Sport, Lesen, Musik, Naturaufenthalte oder Zeit mit Freunden und Familie sein.</li>
+                        <li><i class="fas fa-star text-indigo-500 mr-2"></i> Digitale Entgiftung: Legen Sie regelmäßige Zeiten fest, in denen Sie nicht erreichbar sind und keine Bildschirme nutzen, insbesondere am Abend.</li>
+                    </ul>
+                </div>
+                <div class="md:order-2 order-1 flex justify-center animate-slideInRight">
+                    <img src="https://placehold.co/400x300/d1e7dd/28a745?text=Person+entspannt+mit+Buch" alt="Person entspannt mit einem Buch und einer Tasse Tee" class="rounded-xl shadow-lg w-full max-w-sm"/>
+                </div>
+            </div>
+
+            <!-- Die Bedeutung von Schlaf -->
+            <div class="grid md:grid-cols-2 gap-12 items-center mb-24 section-to-observe">
+                <div class="flex justify-center animate-slideInLeft">
+                    <img src="https://placehold.co/400x300/cce5ff/007bff?text=Mond+und+Sterne+Schlaf" alt="Mond und Sterne symbolisieren Schlaf" class="rounded-xl shadow-lg w-full max-w-sm"/>
+                </div>
+                <div class="animate-slideInRight">
+                    <h3 class="text-3xl font-bold text-gray-900 mb-4">
+                        <i class="fas fa-moon text-blue-600 mr-3"></i> Die Bedeutung von Schlaf
+                    </h3>
+                    <p class="text-lg text-gray-700 leading-relaxed mb-4">
+                        Schlaf ist keine Option, sondern eine biologische Notwendigkeit. Während des Schlafs erholt sich unser Körper auf zellulärer Ebene, unser Gehirn verarbeitet die Informationen des Tages, festigt Erinnerungen und "reinigt" sich von Stoffwechselprodukten. Ein ausreichender und qualitativ hochwertiger Schlaf ist entscheidend für unsere körperliche Gesundheit, geistige Leistungsfähigkeit und emotionale Stabilität.
+                    </p>
+                    <p class="text-lg text-gray-700 leading-relaxed">
+                        Akuter oder chronischer Schlafmangel hat weitreichende negative Folgen: Er beeinträchtigt die Konzentrationsfähigkeit, das Urteilsvermögen und die Reaktionszeit, was das Risiko für Unfälle erhöht. Langfristig kann unzureichender Schlaf zu Übergewicht, Diabetes, Herz-Kreislauf-Erkrankungen, einem geschwächten Immunsystem, Depressionen und Angststörungen führen. Ziel sollte es sein, für Erwachsene 7-9 Stunden erholsamen Schlaf pro Nacht zu bekommen.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Weitere Tipps zum Schlaf -->
+            <div class="grid md:grid-cols-2 gap-12 items-center section-to-observe">
+                <div class="md:order-1 order-2 animate-slideInLeft">
+                    <h3 class="text-3xl font-bold text-gray-900 mb-4">
+                        <i class="fas fa-bed text-teal-600 mr-3"></i> Schlafhygiene verbessern
+                    </h3>
+                    <p class="text-lg text-gray-700 leading-relaxed mb-4">
+                        Eine gute Schlafhygiene umfasst Gewohnheiten und Umweltbedingungen, die einen kontinuierlichen, ununterbrochenen Schlaf fördern:
+                    </p>
+                    <ul class="text-lg text-gray-700 space-y-3">
+                        <li><i class="fas fa-circle-notch text-green-500 mr-2"></i> Feste Schlafzeiten einhalten: Versuchen Sie, jeden Tag zur gleichen Zeit ins Bett zu gehen und aufzustehen, auch am Wochenende. Dies hilft, Ihren inneren Biorhythmus zu regulieren.</li>
+                        <li><i class="fas fa-circle-notch text-green-500 mr-2"></i> Optimale Schlafumgebung schaffen: Sorgen Sie für ein dunkles, ruhiges und kühles Schlafzimmer. Idealerweise sollte die Temperatur zwischen 16-18°C liegen.</li>
+                        <li><i class="fas fa-circle-notch text-green-500 mr-2"></i> Bildschirme vor dem Schlafengehen meiden: Das blaue Licht von Smartphones, Tablets und Computern kann die Melatoninproduktion stören. Vermeiden Sie Bildschirme mindestens 1-2 Stunden vor dem Schlafengehen.</li>
+                        <li><i class="fas fa-circle-notch text-green-500 mr-2"></i> Koffein und Alkohol reduzieren: Verzichten Sie am späten Nachmittag und Abend auf koffeinhaltige Getränke und Alkohol, da diese den Schlaf negativ beeinflussen können.</li>
+                        <li><i class="fas fa-circle-notch text-green-500 mr-2"></i> Entspannungsrituale entwickeln: Eine warme Dusche oder ein Bad, das Lesen eines Buches (kein E-Reader), leichte Dehnübungen oder Meditation können helfen, Körper und Geist auf den Schlaf vorzubereiten.</li>
+                        <li><i class="fas fa-circle-notch text-green-500 mr-2"></i> Regelmäßige Bewegung: Sportliche Aktivität tagsüber kann die Schlafqualität verbessern, vermeiden Sie jedoch intensive Bewegung kurz vor dem Schlafengehen.</li>
+                    </ul>
+                </div>
+                <div class="md:order-2 order-1 flex justify-center animate-slideInRight">
+                    <img src="https://placehold.co/400x300/a8dadc/1d3557?text=Gemütliches+Schlafzimmer" alt="Ein gemütliches Schlafzimmer mit gedämpftem Licht" class="rounded-xl shadow-lg w-full max-w-sm"/>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Checkliste Section -->
+    <section id="checklist-section" class="py-20 bg-white rounded-xl mx-auto max-w-6xl my-16 p-8 relative overflow-hidden shadow-xl">
+        <div class="absolute top-0 left-0 w-64 h-64 bg-teal-300 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-2000"></div>
+        <div class="relative z-10 text-center">
+            <h2 class="text-4xl font-bold text-gray-900 mb-8">
+                <i class="fas fa-tasks text-green-600 mr-3"></i> Deine kurze Wohlfühl-Checkliste
+            </h2>
+            <p class="text-lg text-gray-700 mb-8">
+                Hake ab, was du schon umgesetzt hast! Deine Auswahl wird gespeichert.
+            </p>
+
+            <div id="checklist-container" class="space-y-4 text-left max-w-2xl mx-auto">
+                <!-- Checkliste-Elemente: Reduzierte Auswahl -->
+                <div class="checklist-item" data-item="set_boundaries">
+                    <input type="checkbox" id="check1" class="form-checkbox">
+                    <label for="check1" class="flex-grow text-lg text-gray-800">Setze klare Grenzen und lerne "Nein" sagen.</label>
+                </div>
+                <div class="checklist-item" data-item="take_breaks">
+                    <input type="checkbox" id="check2" class="form-checkbox">
+                    <label for="check2" class="flex-grow text-lg text-gray-800">Mache regelmäßig kurze und längere Pausen.</label>
+                </div>
+                <div class="checklist-item" data-item="hobbies">
+                    <input type="checkbox" id="check3" class="form-checkbox">
+                    <label for="check3" class="flex-grow text-lg text-gray-800">Nimm dir bewusst Zeit für Hobbys und Entspannung.</label>
+                </div>
+                <div class="checklist-item" data-item="fixed_sleep_times">
+                    <input type="checkbox" id="check4" class="form-checkbox">
+                    <label for="check4" class="flex-grow text-lg text-gray-800">Halte feste Schlafzeiten ein (auch am Wochenende).</label>
+                </div>
+                <div class="checklist-item" data-item="optimal_sleep_env">
+                    <input type="checkbox" id="check5" class="form-checkbox">
+                    <label for="check5" class="flex-grow text-lg text-gray-800">Sorge für eine dunkle, ruhige und kühle Schlafumgebung.</label>
+                </div>
+                <div class="checklist-item" data-item="avoid_screens">
+                    <input type="checkbox" id="check6" class="form-checkbox">
+                    <label for="check6" class="flex-grow text-lg text-gray-800">Vermeide Bildschirme 1-2 Stunden vor dem Schlafengehen.</label>
+                </div>
+            </div>
+
+            <div class="mt-10 flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+                <button id="backToTopMain"
+                    class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95">
+                    Zurück zum Hauptinhalt <i class="fas fa-arrow-up ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Weitere Ressourcen Section -->
+    <section class="py-20 bg-indigo-100">
+        <div class="max-w-6xl mx-auto px-8 text-center">
+            <h2 class="text-4xl font-bold text-gray-900 mb-8">
+                <i class="fas fa-book-reader text-indigo-600 mr-3"></i> Weitere Ressourcen
+            </h2>
+            <p class="text-lg text-gray-700 mb-8">
+                Wenn Sie weitere Informationen oder Unterstützung zum Thema Überarbeitung und Schlaf suchen, finden Sie hier einige vertrauenswürdige Quellen:
+            </p>
+            <div class="grid md:grid-cols-3 gap-8">
+                <a href="https://www.who.int/health-topics/mental-health" target="_blank" class="block bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
+                    <i class="fas fa-globe text-indigo-500 text-3xl mb-4"></i>
+                    <h4 class="text-xl font-semibold text-gray-900 mb-2">Weltgesundheitsorganisation (WHO)</h4>
+                    <p class="text-gray-600">Informationen zur psychischen Gesundheit und Wohlbefinden.</p>
+                </a>
+                <a href="https://www.sleepfoundation.org/" target="_blank" class="block bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
+                    <i class="fas fa-bed text-blue-500 text-3xl mb-4"></i>
+                    <h4 class="text-xl font-semibold text-gray-900 mb-2">Sleep Foundation</h4>
+                    <p class="text-gray-600">Umfassende Ressourcen rund um das Thema Schlaf und Schlafstörungen.</p>
+                </a>
+                <a href="https://www.deutsche-depressionshilfe.de/" target="_blank" class="block bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
+                    <i class="fas fa-frown-open text-purple-500 text-3xl mb-4"></i>
+                    <h4 class="text-xl font-semibold text-gray-900 mb-2">Deutsche Depressionshilfe</h4>
+                    <p class="text-gray-600">Hilfe und Informationen bei Depressionen und psychischen Krisen.</p>
+                </a>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-12 text-center mt-16">
+        <div class="max-w-6xl mx-auto px-8">
+            <p class="text-lg mb-4">
+                <i class="fas fa-heart text-red-500 mr-2"></i> Kümmere dich um dich selbst – es ist keine Schwäche, sondern Stärke.
+            </p>
+            <div class="flex justify-center space-x-6 text-2xl mb-4">
+                <a href="#" class="hover:text-indigo-400 transition-colors duration-300"><i class="fab fa-facebook"></i></a>
+                <a href="#" class="hover:text-indigo-400 transition-colors duration-300"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="hover:text-indigo-400 transition-colors duration-300"><i class="fab fa-instagram"></i></a>
+                <a href="#" class="hover:text-indigo-400 transition-colors duration-300"><i class="fab fa-linkedin"></i></a>
+            </div>
+            <p class="text-sm text-gray-400">
+                © <span id="current-year"></span> Bleib mal auf dem Teppich. Alle Rechte vorbehalten.
+            </p>
+        </div>
+    </footer>
+
+    <!-- Scroll to Top Button -->
+    <button id="scrollToTopBtn" class="hidden">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script>
+        // Hinweis: Für die tatsächliche Speicherung mit Firebase müssten Sie Ihre Firebase-Projektkonfiguration
+        // und die Firebase SDKs hier einbinden und die auskommentierten Zeilen aktivieren.
+        // const firebaseConfig = { ... };
+        // firebase.initializeApp(firebaseConfig);
+        // const database = firebase.database();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Setzt das aktuelle Jahr im Footer
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+
+            // Event-Listener für den "Jetzt durchatmen" Button
+            const scrollButton = document.getElementById('scrollButton');
+            if (scrollButton) {
+                scrollButton.addEventListener('click', () => {
+                    const videoSection = document.getElementById('video-section');
+                    if (videoSection) {
+                        videoSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+            }
+
+            // Intersection Observer für Scroll-Animationen (allgemeine Sektionen)
+            const sectionsToObserve = document.querySelectorAll('.section-to-observe');
+            const observer = new IntersectionObserver(
+                (entries) => {
+                    entries.forEach((entry) => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('animate-fadeInUp');
+                            const slideLeft = entry.target.querySelector('.animate-slideInLeft');
+                            const slideRight = entry.target.querySelector('.animate-slideInRight');
+                            if (slideLeft && !slideLeft.style.animationDelay) slideLeft.style.animationDelay = '0.2s';
+                            if (slideRight && !slideRight.style.animationDelay) slideRight.style.animationDelay = '0.2s';
+                        }
+                    });
+                },
+                {
+                    threshold: 0.2,
+                }
+            );
+
+            sectionsToObserve.forEach((section) => {
+                observer.observe(section);
+            });
+
+            // Fliegender Teppich Animation Logik
+            const flyingCarpet = document.getElementById('flying-carpet');
+            const videoSection = document.getElementById('video-section');
+            const youtubeVideoIframe = document.getElementById('youtube-video-iframe');
+            let hasCarpetAnimated = false; // Flag, um die Animation nur einmal auszuführen
+
+            const videoSectionObserver = new IntersectionObserver(
+                (entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting && !hasCarpetAnimated) {
+                            flyingCarpet.classList.add('active');
+                            hasCarpetAnimated = true; // Setze Flag, damit Animation nicht wiederholt wird
+
+                            // Optional: Video starten, wenn der Teppich angeflogen kommt
+                            // Achtung: Autoplay kann von Browsern blockiert werden
+                            const videoSrc = youtubeVideoIframe.src;
+                            if (!videoSrc.includes('autoplay=1')) {
+                                // Füge autoplay=1 zum src hinzu, falls noch nicht vorhanden
+                                const newSrc = videoSrc.includes('?') ? videoSrc + '&autoplay=1' : videoSrc + '?autoplay=1';
+                                youtubeVideoIframe.src = newSrc;
+                            }
+                        }
+                    });
+                },
+                {
+                    threshold: 0.5 // Trigger, wenn 50% der Sektion sichtbar ist
+                }
+            );
+            videoSectionObserver.observe(videoSection);
+
+            // Go to Top Button Logik
+            const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 300) {
+                    scrollToTopBtn.classList.add('show');
+                } else {
+                    scrollToTopBtn.classList.remove('show');
+                }
+            });
+
+            scrollToTopBtn.addEventListener('click', () => {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+
+            // Checklisten-Funktionalität
+            const checklistItems = document.querySelectorAll('.checklist-item');
+            const userId = 'anonymous_user'; // In einer echten Anwendung würden Sie hier eine Benutzer-ID verwenden
+
+            const loadChecklistStatus = () => {
+                // Firebase Integration (auskommentiert)
+                // if (database) {
+                //     database.ref('checklists/' + userId).once('value', (snapshot) => {
+                //         const checkedItems = snapshot.val();
+                //         if (checkedItems) {
+                //             checklistItems.forEach(item => {
+                //                 const dataItem = item.dataset.item;
+                //                 if (checkedItems[dataItem]) {
+                //                     item.querySelector('input[type="checkbox"]').checked = true;
+                //                     item.classList.add('checked');
+                //                 }
+                //             });
+                //         }
+                //     });
+                // } else {
+                    console.warn("Firebase nicht initialisiert. Checklistenstatus wird aus localStorage geladen.");
+                    const localCheckedItems = JSON.parse(localStorage.getItem('checklistStatus') || '{}');
+                    checklistItems.forEach(item => {
+                        const dataItem = item.dataset.item;
+                        if (localCheckedItems[dataItem]) {
+                            item.querySelector('input[type="checkbox"]').checked = true;
+                            item.classList.add('checked');
+                        }
+                    });
+                // }
+            };
+
+            const saveChecklistStatus = () => {
+                const checkedItems = {};
+                checklistItems.forEach(item => {
+                    const dataItem = item.dataset.item;
+                    checkedItems[dataItem] = item.querySelector('input[type="checkbox"]').checked;
+                });
+
+                // Firebase Integration (auskommentiert)
+                // if (database) {
+                //     database.ref('checklists/' + userId).set(checkedItems)
+                //         .then(() => console.log("Checklistenstatus in Firebase gespeichert."))
+                //         .catch(error => console.error("Fehler beim Speichern in Firebase:", error));
+                // } else {
+                    console.warn("Firebase nicht initialisiert. Checklistenstatus wird in localStorage gespeichert.");
+                    localStorage.setItem('checklistStatus', JSON.stringify(checkedItems));
+                // }
+            };
+
+            // Event Listener für Checkbox-Änderungen
+            checklistItems.forEach(item => {
+                const checkbox = item.querySelector('input[type="checkbox"]');
+                checkbox.addEventListener('change', () => {
+                    if (checkbox.checked) {
+                        item.classList.add('checked');
+                    } else {
+                        item.classList.remove('checked');
+                    }
+                    saveChecklistStatus(); // Status speichern bei jeder Änderung
+                });
+            });
+
+            // Lade den Status beim Initialisieren der Seite
+            loadChecklistStatus();
+
+            // Zurück zum Hauptinhalt Button Logik
+            const backToTopMainBtn = document.getElementById('backToTopMain');
+            backToTopMainBtn.addEventListener('click', () => {
+                const heroSection = document.getElementById('hero-section');
+                if (heroSection) {
+                    heroSection.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
